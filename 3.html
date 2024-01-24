@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <style>
+      body {
+        background-color: beige;
+        color: black;
+      }
+      #chat {
+        width: 500px;
+        height: max-content;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 25px;
+        border: 2px solid blue;
+      }
+      span {
+        align-self: flex-start;
+      }
+    </style>
+    <input type="text" />
+    <button id="btnSend">Send</button>
+    <button id="btnGeol">Geolocation</button>
+    <div id="chat"></div>
+    <script>
+      const wsUri = "wss://echo-ws-service.herokuapp.com";
+
+      const value = document.querySelector("input");
+      const btnSend = document.getElementById("btnSend");
+      const btnOpen = document.getElementById("btnOpen");
+      const btnGeol = document.getElementById("btnGeol");
+      const output = document.getElementById("chat");
+
+      let websocket;
+
+      function getCurrentLocation() {
+        navigator.geolocation.getCurrentPosition((position) => {
+          const { coords } = position;
+          console.log(coords.latitude, coords.longitude);
+          const urlLoc = `https://www.openstreetmap.org/#map=10/${coords.latitude}/${coords.longitude}`;
+          displayGeol(urlLoc);
+        });
+      }
+
+      function display(message) {
+        let pre = document.createElement("p");
+        pre.style.wordWrap = "break-word";
+        pre.innerHTML = message;
+        output.appendChild(pre);
+      }
+
+      function displayGeol(urlLoc) {
+        let link = document.createElement("a");
+        link.style.wordWrap = "break-word";
+        link.href = `${urlLoc}`;
+        link.target = "_blank";
+        link.textContent = "Geolocation";
+        output.append(link);
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        websocket = new WebSocket(wsUri);
+        websocket.onopen = function (evt) {
+          display("connected");
+        };
+      });
+
+      btnSend.addEventListener("click", () => {
+        websocket.onmessage = function (evt) {
+          //   console.log(evt.data);
+          display("<span>Response:" + evt.data + "</span>");
+        };
+        websocket.onerror = function (evt) {
+          display("<span>ERROR:</span>" + evt.data);
+        };
+        // console.log("work" + " " + value.value);
+        display("Sent:" + value.value);
+        websocket.send(value.value);
+      });
+      btnGeol.addEventListener("click", () => {
+        getCurrentLocation();
+      });
+    </script>
+  </body>
+</html>
